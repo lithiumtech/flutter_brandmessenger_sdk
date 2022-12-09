@@ -2,6 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'flutter_brandmessenger_sdk_platform_interface.dart';
+import 'dart:io' show Platform;
+
+mixin BrandmessengerNativeCallbackDelegate {
+  void receiveUnreadCount(int unreadCount);
+}
 
 /// An implementation of [FlutterBrandmessengerSdkPlatform] that uses method channels.
 class MethodChannelFlutterBrandmessengerSdk
@@ -32,11 +37,93 @@ class MethodChannelFlutterBrandmessengerSdk
         'setAuthenticationHandlerUrl', authHandlerUrl);
   }
 
-  Future<dynamic> login(dynamic user) async {
-    return await methodChannel.invokeMethod('login', user);
+  Future<dynamic> setAppModuleName(moduleName) async {
+    return await methodChannel.invokeMethod('setAppModuleName', moduleName);
+  }
+
+  Future<dynamic> login(String accessToken) async {
+    return await methodChannel.invokeMethod('login', accessToken);
+  }
+
+  Future<dynamic> loginWithJWT(String jwt, String userId) async {
+    return await methodChannel.invokeMethod('loginWithJWT', [jwt, userId]);
+  }
+
+  Future<dynamic> loginAnonymousUser() async {
+    return await methodChannel.invokeMethod('loginAnonymousUser');
   }
 
   Future<dynamic> show() async {
     return await methodChannel.invokeMethod('show');
+  }
+
+  Future<bool?> isAuthenticated() async {
+    final isAuthenticated =
+        await methodChannel.invokeMethod<bool>('isAuthenticated');
+    return isAuthenticated;
+  }
+
+  Future<String?> getUserId() async {
+    return await methodChannel.invokeMethod('getUserId');
+  }
+
+  void getUnreadCount() {
+    methodChannel.invokeMethod('getUnreadCount');
+  }
+
+  void monitorUnreadCount() {
+    methodChannel.invokeMethod('monitorUnreadCount');
+  }
+
+  void showWithWelcome() {
+    methodChannel.invokeMethod('showWithWelcome');
+  }
+
+  void sendWelcomeMessageRequest() {
+    methodChannel.invokeMethod('sendWelcomeMessageRequest');
+  }
+
+  void fetchNewMessagesOnChatOpen(bool fetchOnOpen) {
+    methodChannel.invokeMethod('fetchNewMessagesOnChatOpen', fetchOnOpen);
+  }
+
+  void setUsePersistentMessagesStorage(bool usePersistentStorage) {
+    methodChannel.invokeMethod(
+        'setUsePersistentMessagesStorage', usePersistentStorage);
+  }
+
+  void logout() {
+    methodChannel.invokeMethod('logout');
+  }
+
+  void setBrandMessengerNativeCallbackDelegate(
+      final BrandmessengerNativeCallbackDelegate delegate) {
+    Future<void> callbackDelegateHandler(MethodCall call) async {
+      switch (call.method) {
+        case "receiveUnreadCount":
+          {
+            final unreadCount = call.arguments as int;
+            delegate.receiveUnreadCount(unreadCount);
+            break;
+          }
+        default:
+          print('TestFairy: Ignoring invoke from native.');
+      }
+    }
+
+    methodChannel.setMethodCallHandler(callbackDelegateHandler);
+  }
+
+  Future<dynamic> registerDeviceForPushNotification() async {
+    if (Platform.isAndroid) {
+      return await methodChannel
+          .invokeMethod('registerDeviceForPushNotification');
+    }
+    return Future.error(
+        'BrandMessenger: registerDeviceForPushNotification called on non-android platform');
+  }
+
+  void setRegion(String region) {
+    methodChannel.invokeMethod('setRegion', region);
   }
 }

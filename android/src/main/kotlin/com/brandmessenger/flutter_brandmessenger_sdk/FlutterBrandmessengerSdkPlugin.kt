@@ -1,13 +1,29 @@
 package com.brandmessenger.flutter_brandmessenger_sdk
 
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import androidx.annotation.NonNull
-import androidx.annotation.Nullable
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.brandmessenger.core.BrandMessenger
+import com.brandmessenger.core.api.BrandMessengerConstants
 import com.brandmessenger.core.api.account.register.RegistrationResponse
 import com.brandmessenger.core.api.account.user.BrandMessengerUserPreference
+import com.brandmessenger.core.api.authentication.KBMAuthenticationDelegate
+import com.brandmessenger.core.api.authentication.KBMAuthenticationDelegateCallback
+import com.brandmessenger.core.api.conversation.Message
+import com.brandmessenger.core.api.conversation.database.MessageDatabaseService
 import com.brandmessenger.core.listeners.KBMLoginHandler
+import com.brandmessenger.core.listeners.KBMLogoutHandler
+import com.brandmessenger.core.listeners.KBMPushNotificationHandler
 import com.brandmessenger.core.ui.BrandMessengerManager
+import com.brandmessenger.core.ui.conversation.richmessaging.KBMMessageActionDelegate
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
+import com.google.firebase.FirebaseApp
+import com.google.firebase.messaging.FirebaseMessaging
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -25,7 +41,7 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
   /// when the Flutter Engine is detached from the Activity
   private lateinit var channel : MethodChannel
 
-  private lateinit var activity: Activity
+  private var activity: Activity? = null
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_brandmessenger_sdk")
@@ -36,31 +52,131 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
     if (activity == null) {
       result.error("NoActivity", "NoActivity", "NoActivity")
     }
-      if (call.method == "getPlatformVersion") {
+    if (call.method == "getPlatformVersion") {
       result.success("Android ${android.os.Build.VERSION.RELEASE}")
+    } else if (call.method == "fetchNewMessagesOnChatOpen") {
+      val fetchOnOpen = call.arguments as? Boolean
+      BrandMessengerUserPreference.getInstance(activity).fetchNewOnFragmentOpen = fetchOnOpen!!
+    } else if (call.method == "getUnreadCount") {
+      Thread {
+        val count = BrandMessengerManager.getTotalUnreadCount(activity)
+        activity!!.runOnUiThread {
+          channel.invokeMethod("receiveUnreadCount", count)
+        }
+      }.start()
+    } else if (call.method == "getUserId") {
+      val userId = BrandMessengerManager.getDefaultUserId(activity)
+      result.success(userId)
     } else if (call.method == "initWithCompanyKeyAndApplicationId") {
-      val args = call.arguments as? Array<*>
+      val args = call.arguments as? ArrayList<*>
       if (args != null && args.size == 2) {
-        BrandMessengerManager.init(activity, args[0] as String?, args[1] as String?)
+        BrandMessengerManager.init(activity!!, args[0] as String?, args[1] as String?)
       }
-    } else if (call.method == "setBaseURL") {
-      val args = call.arguments as? String
-      BrandMessengerUserPreference.getInstance(activity).url = args
-    } else if (call.method == "setAuthenticationHandlerUrl") {
-      val args = call.arguments as? String
-      BrandMessengerUserPreference.getInstance(activity).customAuthHandlerUrl = args
+    } else if (call.method == "isAuthenticated") {
+      val isAuthenticated = BrandMessengerManager.isAuthenticated(activity, false)
+      result.success(isAuthenticated)
     } else if (call.method == "login") {
       val args = call.arguments as? String
       BrandMessengerManager.login(activity, args, object : KBMLoginHandler {
         override fun onSuccess(p0: RegistrationResponse, p1: Context?) {
+          result.success(p0.toString());
         }
+
         override fun onFailure(p0: RegistrationResponse?, p1: java.lang.Exception?) {
+          result.error("LoginError", "LoginError", p0.toString())
         }
       })
+    } else if (call.method == "loginAnonymousUser") {
+      BrandMessengerManager.loginAnonymousUser(activity, object: KBMLoginHandler {
+        override fun onSuccess(p0: RegistrationResponse, p1: Context?) {
+          result.success(p0.toString());
+        }
+
+        override fun onFailure(p0: RegistrationResponse?, p1: java.lang.Exception?) {
+          result.error("LoginError", "LoginError", p0.toString())
+        }
+      })
+    } else if (call.method == "loginWithJWT") {
+      val args = call.arguments as? ArrayList<String>
+      if (args != null && args.size == 2) {
+        BrandMessengerManager.loginWithJWT(activity, args[0], args[1], object : KBMLoginHandler {
+          override fun onSuccess(p0: RegistrationResponse, p1: Context?) {
+            result.success(p0.toString());
+          }
+
+          override fun onFailure(p0: RegistrationResponse?, p1: java.lang.Exception?) {
+            result.error("LoginError", "LoginError", p0.toString())
+          }
+        })
+      }
+    } else if (call.method == "logout") {
+      BrandMessengerManager.logout(activity, object : KBMLogoutHandler {
+        override fun onSuccess(p0: Context?) {
+          result.success(p0.toString())
+        }
+        override fun onFailure(p0: Exception?) {
+          result.error("LogoutError", "LogoutError", p0.toString())
+        }
+      })
+    } else if (call.method == "monitorUnreadCount") {
+      BrandMessenger.connectPublishWithVerifyTokenAfter(
+        activity!!,
+        activity?.getString(R.string.com_kbm_auth_token_loading_message),
+        0
+      )
+    } else if (call.method == "registerDeviceForPushNotification") {
+      FirebaseMessaging.getInstance().getToken()
+        .addOnCompleteListener { task ->
+          val token: String? = task.getResult()
+          BrandMessenger.registerForPushNotification(
+            activity,
+            token,
+            object : KBMPushNotificationHandler {
+              override fun onSuccess(registrationResponse: RegistrationResponse) {
+                result.success("BrandMessenger: FCM registerForPushNotification Success")
+              }
+
+              override fun onFailure(
+                registrationResponse: RegistrationResponse,
+                exception: Exception
+              ) {
+                result.success("BrandMessenger: FCM registerForPushNotification Failed")
+              }
+            })
+        }
+    } else if (call.method == "sendWelcomeMessageRequest") {
+      BrandMessengerManager.sendWelcomeMessageRequest(activity)
+    } else if (call.method == "setAppModuleName") {
+//  TODO: Will be enabled with Android SDK 1.13.0 or higher.
+//      val args = call.arguments as? String
+//      BrandMessengerUserPreference.getInstance(activity).appModuleName = args
+    } else if (call.method == "setAuthenticationHandlerUrl") {
+      val args = call.arguments as? String
+      BrandMessengerUserPreference.getInstance(activity).customAuthHandlerUrl = args
+    } else if (call.method == "setBaseURL") {
+      val args = call.arguments as? String
+      BrandMessengerUserPreference.getInstance(activity).url = args
+    } else if (call.method == "setRegion") {
+      val args = call.arguments as? String
+      BrandMessengerManager.setRegion(activity, args)
+    } else if (call.method == "setUsePersistentMessagesStorage") {
+      result.notImplemented()
     } else if (call.method == "show") {
       BrandMessengerManager.show(activity)
+    } else if (call.method == "showWithWelcome") {
+      BrandMessengerManager.showWithWelcome(activity)
     } else {
       result.notImplemented()
+    }
+  }
+
+  var unreadCountBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent) {
+      if (BrandMessengerConstants.BRAND_MESSENGER_UNREAD_COUNT == intent.action) {
+        val messageDatabaseService = MessageDatabaseService(context)
+        val unreadCount = messageDatabaseService.totalUnreadCount
+        channel.invokeMethod("receiveUnreadCount", unreadCount)
+      }
     }
   }
 
@@ -70,17 +186,58 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     activity = binding.activity
+    LocalBroadcastManager.getInstance(activity!!).registerReceiver(unreadCountBroadcastReceiver, IntentFilter(BrandMessengerConstants.BRAND_MESSENGER_UNREAD_COUNT))
+    BrandMessenger.connectPublishWithVerifyTokenAfter(
+      activity!!,
+      activity?.getString(R.string.com_kbm_auth_token_loading_message),
+      0
+    )
   }
 
   override fun onDetachedFromActivityForConfigChanges() {
-    TODO("Not yet implemented")
+    BrandMessenger.disconnectPublish(activity!!)
+    LocalBroadcastManager.getInstance(activity!!).unregisterReceiver(unreadCountBroadcastReceiver)
+    activity = null
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-    TODO("Not yet implemented")
+    activity = binding.activity
+    LocalBroadcastManager.getInstance(activity!!).registerReceiver(unreadCountBroadcastReceiver, IntentFilter(BrandMessengerConstants.BRAND_MESSENGER_UNREAD_COUNT))
+    BrandMessenger.connectPublishWithVerifyTokenAfter(
+      activity!!,
+      activity?.getString(R.string.com_kbm_auth_token_loading_message),
+      0
+    )
   }
 
   override fun onDetachedFromActivity() {
-    TODO("Not yet implemented")
+    BrandMessenger.disconnectPublish(activity!!)
+    LocalBroadcastManager.getInstance(activity!!).unregisterReceiver(unreadCountBroadcastReceiver)
+    activity = null
+  }
+
+  // MessageActionDelegate is a synchronous action that required a boolean return value.
+  fun setMessageActionDelegate() {
+    BrandMessengerManager.setMessageActionDelegate(object: KBMMessageActionDelegate {
+      override fun onAction(
+        p0: Context?,
+        p1: String?,
+        p2: Message?,
+        p3: Any?,
+        p4: MutableMap<String, Any>?
+      ): Boolean {
+        return true
+      }
+    })
+  }
+
+  // KBMAuthenticationDelegate is a synchronous action that required a string return value.
+  fun setAuthenticationDelegate() {
+    BrandMessenger.getInstance(activity).setAuthenticationDelegate { object : KBMAuthenticationDelegate {
+      override fun onRefreshFail(p0: KBMAuthenticationDelegateCallback?) {
+        // Attempt to refresh token has failed. Provide a new authentication token here to relogin, or return empty string and log user back in later.
+        p0?.updateToken("")
+      }
+    } }
   }
 }
