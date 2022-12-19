@@ -6,6 +6,7 @@ import 'dart:io' show Platform;
 
 mixin BrandmessengerNativeCallbackDelegate {
   void receiveUnreadCount(int unreadCount);
+  Object modifyMessageBeforeSend(Object message);
 }
 
 /// An implementation of [FlutterBrandmessengerSdkPlatform] that uses method channels.
@@ -14,6 +15,33 @@ class MethodChannelFlutterBrandmessengerSdk
   /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel('flutter_brandmessenger_sdk');
+
+  MethodChannelFlutterBrandmessengerSdk() {
+    methodChannel.setMethodCallHandler(callbackDelegateHandler);
+  }
+
+  BrandmessengerNativeCallbackDelegate? nativeDelegate;
+  Future<Object?> callbackDelegateHandler(MethodCall call) async {
+    switch (call.method) {
+      case "receiveUnreadCount":
+        {
+          final unreadCount = call.arguments as int;
+          nativeDelegate?.receiveUnreadCount(unreadCount);
+          print("--->>> receiveUnreadCount");
+          break;
+        }
+      case "modifyMessageBeforeSend":
+        {
+          final message = call.arguments as Object;
+          print("--->>> modifyMessageBeforeSend");
+          // Object modifiedMessage = nativeDelegate?.modifyMessageBeforeSend(message);
+          return message;
+        }
+      default:
+        print('TestFairy: Ignoring invoke from native.');
+    }
+    return null;
+  }
 
   @override
   Future<String?> getPlatformVersion() async {
@@ -97,21 +125,8 @@ class MethodChannelFlutterBrandmessengerSdk
   }
 
   void setBrandMessengerNativeCallbackDelegate(
-      final BrandmessengerNativeCallbackDelegate delegate) {
-    Future<void> callbackDelegateHandler(MethodCall call) async {
-      switch (call.method) {
-        case "receiveUnreadCount":
-          {
-            final unreadCount = call.arguments as int;
-            delegate.receiveUnreadCount(unreadCount);
-            break;
-          }
-        default:
-          print('TestFairy: Ignoring invoke from native.');
-      }
-    }
-
-    methodChannel.setMethodCallHandler(callbackDelegateHandler);
+      BrandmessengerNativeCallbackDelegate delegate) {
+    nativeDelegate = delegate;
   }
 
   Future<dynamic> registerDeviceForPushNotification() async {

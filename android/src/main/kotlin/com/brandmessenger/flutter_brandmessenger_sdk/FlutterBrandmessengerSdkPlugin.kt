@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.util.Log
 import androidx.annotation.NonNull
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.brandmessenger.core.BrandMessenger
@@ -13,6 +14,7 @@ import com.brandmessenger.core.api.account.register.RegistrationResponse
 import com.brandmessenger.core.api.account.user.BrandMessengerUserPreference
 import com.brandmessenger.core.api.authentication.KBMAuthenticationDelegate
 import com.brandmessenger.core.api.authentication.KBMAuthenticationDelegateCallback
+import com.brandmessenger.core.api.conversation.KBMConversationDelegate
 import com.brandmessenger.core.api.conversation.Message
 import com.brandmessenger.core.api.conversation.database.MessageDatabaseService
 import com.brandmessenger.core.listeners.KBMLoginHandler
@@ -186,6 +188,9 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     activity = binding.activity
+
+    BrandMessengerManager.setConversationDelegate(conversationDelegate);
+
     LocalBroadcastManager.getInstance(activity!!).registerReceiver(unreadCountBroadcastReceiver, IntentFilter(BrandMessengerConstants.BRAND_MESSENGER_UNREAD_COUNT))
     BrandMessenger.connectPublishWithVerifyTokenAfter(
       activity!!,
@@ -240,4 +245,23 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
       }
     } }
   }
+
+  private var conversationDelegate: KBMConversationDelegate =
+    KBMConversationDelegate { p0 ->
+      channel.invokeMethod("modifyMessageBeforeSend", p0.metadata, object : MethodChannel.Result {
+        override fun success(result: Any?) {
+          Log.d("--->>>", "conversation result " + result)
+//          TODO("Not yet implemented")
+        }
+
+        override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+          TODO("Not yet implemented")
+        }
+
+        override fun notImplemented() {
+          TODO("Not yet implemented")
+        }
+      });
+      p0;
+    }
 }
