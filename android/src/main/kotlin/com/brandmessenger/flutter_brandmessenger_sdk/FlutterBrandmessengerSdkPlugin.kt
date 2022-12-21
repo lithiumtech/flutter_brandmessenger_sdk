@@ -33,7 +33,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-
+import java.util.concurrent.Semaphore
 
 /** FlutterBrandmessengerSdkPlugin */
 class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
@@ -246,22 +246,61 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
     } }
   }
 
-  private var conversationDelegate: KBMConversationDelegate =
-    KBMConversationDelegate { p0 ->
-      channel.invokeMethod("modifyMessageBeforeSend", p0.metadata, object : MethodChannel.Result {
-        override fun success(result: Any?) {
-          Log.d("--->>>", "conversation result " + result)
-//          TODO("Not yet implemented")
-        }
+//  private var conversationDelegate: KBMConversationDelegate = object : KBMConversationDelegate {
+//    override fun modifyMessageBeforeSend(p0: Message): Message {
+//      var messageMetadata: Map<String, String>? = p0.metadata
+//      runBlocking {
+//        launch {
+//          messageMetadata = suspendCoroutine<Map<String, String>> { cont ->
+//            channel.invokeMethod(
+//              "modifyMessageBeforeSend",
+//              p0.metadata,
+//              object : MethodChannel.Result {
+//                override fun success(result: Any?) {
+//                  cont.resume(result as Map<String, String>)
+//                }
+//
+//                override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+//                  cont.resumeWithException(Error("errorCode"))
+//                }
+//
+//                override fun notImplemented() {
+//                  cont.resumeWithException(Error("notImplemented"))
+//                }
+//              })
+//          }
+//        p0.metadata = messageMetadata
+//        }
+//      }
+//      return p0
+//    }
+//  }}
 
-        override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-          TODO("Not yet implemented")
-        }
+  private var conversationDelegate: KBMConversationDelegate = object : KBMConversationDelegate {
+    override fun modifyMessageBeforeSend(p0: Message): Message {
+      var available: Semaphore = Semaphore(0)
 
-        override fun notImplemented() {
-          TODO("Not yet implemented")
-        }
-      });
-      p0;
+      var messageMetadata: Map<String, String>? = p0.metadata
+      activity?.runOnUiThread {
+      channel.invokeMethod(
+        "modifyMessageBeforeSend",
+        p0.metadata,
+        object : MethodChannel.Result {
+          override fun success(result: Any?) {
+            p0.metadata = result as Map<String, String>
+            available.release()
+          }
+
+          override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+            available.release()
+          }
+
+          override fun notImplemented() {
+            available.release()
+          }
+        })
+      }
+      available.acquire()
+      return p0
     }
-}
+  }}

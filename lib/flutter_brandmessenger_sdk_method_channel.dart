@@ -32,10 +32,10 @@ class MethodChannelFlutterBrandmessengerSdk
         }
       case "modifyMessageBeforeSend":
         {
-          final message = call.arguments as Object;
-          print("--->>> modifyMessageBeforeSend");
+          final metadata = call.arguments as Map;
+          print("--->>> modifyMessageBeforeSend2 " + metadata.toString());
           // Object modifiedMessage = nativeDelegate?.modifyMessageBeforeSend(message);
-          return message;
+          return metadata;
         }
       default:
         print('TestFairy: Ignoring invoke from native.');
