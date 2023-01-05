@@ -3,7 +3,7 @@ import UIKit
 import BrandMessengerUI
 import BrandMessengerCore
 
-public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin {
+public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMConversationDelegate {
     static var _channel: FlutterMethodChannel? = nil
     
     // MARK: FlutterPlugin
@@ -124,6 +124,21 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    // MARK: KBMConversationDelegate modifyMessageBeforeSend
+    public func modifyMessage(beforeSend message: KBMMessage) -> KBMMessage {
+        let semaphore = DispatchSemaphore(value: 0)
+        if let channel = SwiftFlutterBrandmessengerSdkPlugin._channel {
+            DispatchQueue.global(qos: .userInitiated).async {
+                channel.invokeMethod("modifyMessageBeforeSend", arguments: message.metadata) { result in
+                    message.metadata = result as? NSMutableDictionary
+                    semaphore.signal()
+                }
+            }
+        }
+        semaphore.wait()
+        return message
+    }
+    
     // MARK: FlutterPluginAppLifeCycleDelegate
     public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [AnyHashable : Any] = [:]) -> Bool {
         let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
@@ -146,6 +161,7 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin {
     public func applicationDidBecomeActive(_ application: UIApplication) {
         debugPrint("applicationDidBecomeActive")
         NotificationCenter.default.addObserver(self, selector: #selector(onUnreadCount(notification:)), name: NSNotification.Name("BRAND_MESSENGER_UNREAD_COUNT"), object: nil)
+        BrandMessengerManager.setConversationDelegate(self)
     }
 
     public func applicationWillTerminate(_ application: UIApplication) {
