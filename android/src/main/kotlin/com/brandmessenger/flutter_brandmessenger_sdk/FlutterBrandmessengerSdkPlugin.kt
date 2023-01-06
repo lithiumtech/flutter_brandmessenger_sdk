@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.util.Log
 import androidx.annotation.NonNull
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.brandmessenger.core.BrandMessenger
@@ -22,9 +21,6 @@ import com.brandmessenger.core.listeners.KBMLogoutHandler
 import com.brandmessenger.core.listeners.KBMPushNotificationHandler
 import com.brandmessenger.core.ui.BrandMessengerManager
 import com.brandmessenger.core.ui.conversation.richmessaging.KBMMessageActionDelegate
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
-import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -246,36 +242,6 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
     } }
   }
 
-//  private var conversationDelegate: KBMConversationDelegate = object : KBMConversationDelegate {
-//    override fun modifyMessageBeforeSend(p0: Message): Message {
-//      var messageMetadata: Map<String, String>? = p0.metadata
-//      runBlocking {
-//        launch {
-//          messageMetadata = suspendCoroutine<Map<String, String>> { cont ->
-//            channel.invokeMethod(
-//              "modifyMessageBeforeSend",
-//              p0.metadata,
-//              object : MethodChannel.Result {
-//                override fun success(result: Any?) {
-//                  cont.resume(result as Map<String, String>)
-//                }
-//
-//                override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-//                  cont.resumeWithException(Error("errorCode"))
-//                }
-//
-//                override fun notImplemented() {
-//                  cont.resumeWithException(Error("notImplemented"))
-//                }
-//              })
-//          }
-//        p0.metadata = messageMetadata
-//        }
-//      }
-//      return p0
-//    }
-//  }}
-
   private var conversationDelegate: KBMConversationDelegate = object : KBMConversationDelegate {
     override fun modifyMessageBeforeSend(p0: Message): Message {
       var available: Semaphore = Semaphore(0)
@@ -303,4 +269,5 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
       available.acquire()
       return p0
     }
-  }}
+  }
+}
