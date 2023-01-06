@@ -6,7 +6,10 @@ import 'dart:io' show Platform;
 
 mixin BrandmessengerNativeCallbackDelegate {
   void receiveUnreadCount(int unreadCount);
-  Object modifyMessageBeforeSend(Object message);
+}
+
+mixin BrandmessengerConversationDelegate {
+  Map modifyMessageBeforeSend(Map metadata);
 }
 
 /// An implementation of [FlutterBrandmessengerSdkPlatform] that uses method channels.
@@ -20,22 +23,25 @@ class MethodChannelFlutterBrandmessengerSdk
     methodChannel.setMethodCallHandler(callbackDelegateHandler);
   }
 
-  BrandmessengerNativeCallbackDelegate? nativeDelegate;
+  static BrandmessengerNativeCallbackDelegate? nativeDelegate;
+  static BrandmessengerConversationDelegate? conversationDelegate;
   Future<Object?> callbackDelegateHandler(MethodCall call) async {
     switch (call.method) {
       case "receiveUnreadCount":
         {
           final unreadCount = call.arguments as int;
           nativeDelegate?.receiveUnreadCount(unreadCount);
-          print("--->>> receiveUnreadCount");
           break;
         }
       case "modifyMessageBeforeSend":
         {
           final metadata = call.arguments as Map;
-          print("--->>> modifyMessageBeforeSend2 " + metadata.toString());
-          // Object modifiedMessage = nativeDelegate?.modifyMessageBeforeSend(message);
-          return metadata;
+          Map? modifiedMetadata = metadata;
+          if (conversationDelegate != null) {
+            modifiedMetadata =
+                conversationDelegate?.modifyMessageBeforeSend(metadata);
+          }
+          return modifiedMetadata;
         }
       default:
         print('TestFairy: Ignoring invoke from native.');
@@ -127,6 +133,11 @@ class MethodChannelFlutterBrandmessengerSdk
   void setBrandMessengerNativeCallbackDelegate(
       BrandmessengerNativeCallbackDelegate delegate) {
     nativeDelegate = delegate;
+  }
+
+  void setBrandMessengerConversationDelegate(
+      BrandmessengerConversationDelegate? delegate) {
+    conversationDelegate = delegate;
   }
 
   Future<dynamic> registerDeviceForPushNotification() async {

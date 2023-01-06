@@ -127,8 +127,9 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
     // MARK: KBMConversationDelegate modifyMessageBeforeSend
     public func modifyMessage(beforeSend message: KBMMessage) -> KBMMessage {
         let semaphore = DispatchSemaphore(value: 0)
-        if let channel = SwiftFlutterBrandmessengerSdkPlugin._channel {
-            DispatchQueue.global(qos: .userInitiated).async {
+        
+        DispatchQueue.main.async {
+            if let channel = SwiftFlutterBrandmessengerSdkPlugin._channel {
                 channel.invokeMethod("modifyMessageBeforeSend", arguments: message.metadata) { result in
                     message.metadata = result as? NSMutableDictionary
                     semaphore.signal()

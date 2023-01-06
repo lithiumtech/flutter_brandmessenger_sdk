@@ -83,6 +83,11 @@ class FlutterBrandmessengerSdk {
     _methodChannel.setBrandMessengerNativeCallbackDelegate(delegate);
   }
 
+  void setBrandMessengerConversationDelegate(
+      BrandmessengerConversationDelegate? delegate) {
+    _methodChannel.setBrandMessengerConversationDelegate(delegate);
+  }
+
 // Android only. iOS will return Future.error
   Future<dynamic> registerDeviceForPushNotification() async {
     return _methodChannel.registerDeviceForPushNotification();
