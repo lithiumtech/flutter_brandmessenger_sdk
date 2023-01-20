@@ -15,11 +15,13 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
     }
         
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        if (call.method == "fetchNewMessagesOnChatOpen") {
-           if let fetchOnOpen = call.arguments as? Bool {
-               KBMUserDefaultsHandler.setFetchNewOnChatOpen(fetchOnOpen)
-           }
-        } else if (call.method == "getUnreadCount") {
+        if (call.method == "enableDefaultCertificatePinning") {
+            BrandMessengerManager.enableDefaultCertificatePinning()
+        } else if (call.method == "fetchNewMessagesOnChatOpen") {
+            if let fetchOnOpen = call.arguments as? Bool {
+                KBMUserDefaultsHandler.setFetchNewOnChatOpen(fetchOnOpen)
+            }
+         } else if (call.method == "getUnreadCount") {
             BrandMessengerManager.getTotalUnreadCount { count, error in
                 if let channel = SwiftFlutterBrandmessengerSdkPlugin._channel {
                     channel.invokeMethod("receiveUnreadCount", arguments: count)

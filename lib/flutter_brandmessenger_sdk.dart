@@ -96,4 +96,8 @@ class FlutterBrandmessengerSdk {
   void setRegion(String region) {
     _methodChannel.setRegion(region);
   }
+
+  void enableDefaultCertificatePinning() {
+    _methodChannel.enableDefaultCertificatePinning();
+  }
 }

@@ -50,7 +50,9 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
     if (activity == null) {
       result.error("NoActivity", "NoActivity", "NoActivity")
     }
-    if (call.method == "getPlatformVersion") {
+    if (call.method == "enableDefaultCertificatePinning") {
+      BrandMessengerManager.enableDefaultCertificatePinning(activity)
+    } else if (call.method == "getPlatformVersion") {
       result.success("Android ${android.os.Build.VERSION.RELEASE}")
     } else if (call.method == "fetchNewMessagesOnChatOpen") {
       val fetchOnOpen = call.arguments as? Boolean

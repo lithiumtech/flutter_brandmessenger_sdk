@@ -152,4 +152,8 @@ class MethodChannelFlutterBrandmessengerSdk
   void setRegion(String region) {
     methodChannel.invokeMethod('setRegion', region);
   }
+
+  void enableDefaultCertificatePinning() {
+    methodChannel.invokeMethod('enableDefaultCertificatePinning');
+  }
 }
