@@ -147,9 +147,8 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
     } else if (call.method == "sendWelcomeMessageRequest") {
       BrandMessengerManager.sendWelcomeMessageRequest(activity)
     } else if (call.method == "setAppModuleName") {
-//  TODO: Will be enabled with Android SDK 1.13.0 or higher.
-//      val args = call.arguments as? String
-//      BrandMessengerUserPreference.getInstance(activity).appModuleName = args
+      val args = call.arguments as? String
+      BrandMessengerUserPreference.getInstance(activity).appModuleName = args
     } else if (call.method == "setAuthenticationHandlerUrl") {
       val args = call.arguments as? String
       BrandMessengerUserPreference.getInstance(activity).customAuthHandlerUrl = args

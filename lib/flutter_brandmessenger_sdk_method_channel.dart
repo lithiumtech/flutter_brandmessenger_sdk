@@ -156,4 +156,9 @@ class MethodChannelFlutterBrandmessengerSdk
   void enableDefaultCertificatePinning() {
     methodChannel.invokeMethod('enableDefaultCertificatePinning');
   }
+
+  Future<dynamic> updateUserAttributes(Map userAttributes) async {
+    return await methodChannel.invokeMethod(
+        "updateUserAttributes", userAttributes);
+  }
 }

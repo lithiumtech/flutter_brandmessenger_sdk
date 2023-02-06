@@ -100,4 +100,8 @@ class FlutterBrandmessengerSdk {
   void enableDefaultCertificatePinning() {
     _methodChannel.enableDefaultCertificatePinning();
   }
+
+  Future<dynamic> updateUserAttributes(Map userAttributes) async {
+    return _methodChannel.updateUserAttributes(userAttributes);
+  }
 }

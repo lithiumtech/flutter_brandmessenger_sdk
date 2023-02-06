@@ -88,6 +88,20 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
             BrandMessengerManager.show()
         } else if (call.method == "showWithWelcome") {
             BrandMessengerManager.showWithWelcome()
+        } else if (call.method == "updateUserAttributes") {
+            if let arg = call.arguments as? NSDictionary {
+                let displayName = arg.value(forKey: "displayName") as? String
+                let userImageLink = arg.value(forKey: "userImageLink") as? String
+                let userStatus = arg.value(forKey: "userStatus") as? String
+                let metadata = arg.value(forKey: "metadata") as? NSMutableDictionary
+                KBMUserClientService().updateUserDisplayName(displayName, andUserImageLink: userImageLink, userStatus: userStatus, metadata: metadata) { response, error in
+                    if let error = error {
+                        result(FlutterError(code: "BM_UPDATE_USER_ERROR", message: "Failed to update user details", details: error))
+                    } else {
+                        result(response)
+                    }
+                }
+            }
         } else {
             result("iOS " + UIDevice.current.systemVersion)
         }
