@@ -11,6 +11,7 @@ import com.brandmessenger.core.BrandMessenger
 import com.brandmessenger.core.api.BrandMessengerConstants
 import com.brandmessenger.core.api.account.register.RegistrationResponse
 import com.brandmessenger.core.api.account.user.BrandMessengerUserPreference
+import com.brandmessenger.core.api.account.user.UserService
 import com.brandmessenger.core.api.authentication.KBMAuthenticationDelegate
 import com.brandmessenger.core.api.authentication.KBMAuthenticationDelegateCallback
 import com.brandmessenger.core.api.conversation.KBMConversationDelegate
@@ -29,6 +30,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 
 /** FlutterBrandmessengerSdkPlugin */
@@ -70,7 +72,7 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
     } else if (call.method == "initWithCompanyKeyAndApplicationId") {
       val args = call.arguments as? ArrayList<*>
       if (args != null && args.size == 2) {
-        BrandMessengerManager.init(activity!!, args[0] as String?, args[1] as String?)
+        BrandMessengerManager.init(activity!!, args[0] as String, args[1] as String)
       }
     } else if (call.method == "isAuthenticated") {
       val isAuthenticated = BrandMessengerManager.isAuthenticated(activity, false)
@@ -164,6 +166,21 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
       BrandMessengerManager.show(activity)
     } else if (call.method == "showWithWelcome") {
       BrandMessengerManager.showWithWelcome(activity)
+    } else if (call.method == "updateUserAttributes") {
+      val args = call.arguments as? Map<*, *>
+      val displayName = args?.get("displayName") as? String
+      val userImageLink = args?.get("userImageLink") as? String
+      val localURL = args?.get("localURL") as? String
+      val userStatus = args?.get("userStatus") as? String
+      val contactNumber = args?.get("contactNumber") as? String
+      val metadata = args?.get("metadata") as? Map<String, String>
+      activity?.let {
+        Executors.newSingleThreadExecutor().execute(Runnable {
+          val response = UserService.getInstance(it).updateDisplayNameORImageLink(displayName, userImageLink, localURL, userStatus, contactNumber, metadata)
+          response?.let { result.success(response) }
+                  ?:run { result.error("BM_UPDATE_USER_ERROR", "Failed to update user details", "Error while updating user attributes")}
+        })
+      }
     } else {
       result.notImplemented()
     }
