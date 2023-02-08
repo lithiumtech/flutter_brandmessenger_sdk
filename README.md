@@ -179,3 +179,44 @@ For Android, you need to get the firebase token and register it with the BrandMe
     });
 
 On iOS, `registerDeviceForPushNotification` will return `Future.error()`.
+
+### Certificate Pinning
+
+Certificate pinning against Khoros Authentication and Messaging endpoints can be enabled.
+(Available for APAC only in v0.2.0)
+
+    App.bmsdk.enableDefaultCertificatePinning();
+
+### Metadata
+
+#### Updating user attributes
+
+User attributes can by updated from the SDK by calling `updateUserAttributes`
+It is highly recommended to call this after login.
+
+    App.bmsdk.login(accessToken).then((value) {
+      Map userAttributes = {};
+      userAttributes["displayName"] = "Display Name";
+      userAttributes["userImageLink"] = "Image Url";
+      userAttributes["userStatus"] = "Status";
+      userAttributes["metadata"] = {"additionalkey": "additionalvalue"};
+      App.bmsdk.updateUserAttributes(userAttributes).then((value) {
+        // update successful
+      });
+    });
+
+#### Modifying message metadata
+
+Metadata for each sent message can be modified by implementing `setBrandMessengerConversationDelegate` with a class with `BrandmessengerConversationDelegate`. This class will intercept before a message is sent, allowing the implementation to return a modified metadata Map to the SDK.
+
+    class MetadataModifier with BrandmessengerConversationDelegate {
+      static MetadataModifier instance = MetadataModifier();
+      @override
+      Map modifyMessageBeforeSend(Map metadata) {
+        metadata["additionalkey"] = "additionalvalue";
+        return metadata;
+      }
+    }
+    ...
+    MyApp.bmsdk
+        .setBrandMessengerConversationDelegate(MetadataModifier.instance);

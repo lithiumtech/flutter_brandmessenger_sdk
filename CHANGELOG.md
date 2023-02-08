@@ -1,3 +1,19 @@
-## 0.0.1
+## 0.1.0
 
-* TODO: Describe initial release.
+Initial Flutter SDK release. Includes:
+* Installation/Initialization
+* setRegion/setBaseURL/setAuthenticationHandlerUrl
+* Login (IDP/JWT/anonymous)
+*  isAuthenticated
+* logout
+* show/showWithWelcome/sendWelcomeMessageRequest
+* GetU unread count/Monitor unread count
+* fetchNewMessagesOnChatOpen
+* setUsePersistentMessagesStorage
+* Push notifications
+
+## 0.2.0
+
+* modifyMessageBeforeSend
+* enableDefaultCertificatePinning
+* updateUserAttributes
