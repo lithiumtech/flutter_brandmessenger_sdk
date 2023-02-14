@@ -3,7 +3,7 @@ import UIKit
 import BrandMessengerUI
 import BrandMessengerCore
 
-public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin {
+public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMConversationDelegate {
     static var _channel: FlutterMethodChannel? = nil
     
     // MARK: FlutterPlugin
@@ -15,11 +15,13 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin {
     }
         
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        if (call.method == "fetchNewMessagesOnChatOpen") {
-           if let fetchOnOpen = call.arguments as? Bool {
-               KBMUserDefaultsHandler.setFetchNewOnChatOpen(fetchOnOpen)
-           }
-        } else if (call.method == "getUnreadCount") {
+        if (call.method == "enableDefaultCertificatePinning") {
+            BrandMessengerManager.enableDefaultCertificatePinning()
+        } else if (call.method == "fetchNewMessagesOnChatOpen") {
+            if let fetchOnOpen = call.arguments as? Bool {
+                KBMUserDefaultsHandler.setFetchNewOnChatOpen(fetchOnOpen)
+            }
+         } else if (call.method == "getUnreadCount") {
             BrandMessengerManager.getTotalUnreadCount { count, error in
                 if let channel = SwiftFlutterBrandmessengerSdkPlugin._channel {
                     channel.invokeMethod("receiveUnreadCount", arguments: count)
@@ -86,6 +88,20 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin {
             BrandMessengerManager.show()
         } else if (call.method == "showWithWelcome") {
             BrandMessengerManager.showWithWelcome()
+        } else if (call.method == "updateUserAttributes") {
+            if let arg = call.arguments as? NSDictionary {
+                let displayName = arg.value(forKey: "displayName") as? String
+                let userImageLink = arg.value(forKey: "userImageLink") as? String
+                let userStatus = arg.value(forKey: "userStatus") as? String
+                let metadata = arg.value(forKey: "metadata") as? NSMutableDictionary
+                KBMUserClientService().updateUserDisplayName(displayName, andUserImageLink: userImageLink, userStatus: userStatus, metadata: metadata) { response, error in
+                    if let error = error {
+                        result(FlutterError(code: "BM_UPDATE_USER_ERROR", message: "Failed to update user details", details: error))
+                    } else {
+                        result(response)
+                    }
+                }
+            }
         } else {
             result("iOS " + UIDevice.current.systemVersion)
         }
@@ -124,6 +140,22 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    // MARK: KBMConversationDelegate modifyMessageBeforeSend
+    public func modifyMessage(beforeSend message: KBMMessage) -> KBMMessage {
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        DispatchQueue.main.async {
+            if let channel = SwiftFlutterBrandmessengerSdkPlugin._channel {
+                channel.invokeMethod("modifyMessageBeforeSend", arguments: message.metadata) { result in
+                    message.metadata = result as? NSMutableDictionary
+                    semaphore.signal()
+                }
+            }
+        }
+        semaphore.wait()
+        return message
+    }
+    
     // MARK: FlutterPluginAppLifeCycleDelegate
     public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [AnyHashable : Any] = [:]) -> Bool {
         let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
@@ -146,6 +178,7 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin {
     public func applicationDidBecomeActive(_ application: UIApplication) {
         debugPrint("applicationDidBecomeActive")
         NotificationCenter.default.addObserver(self, selector: #selector(onUnreadCount(notification:)), name: NSNotification.Name("BRAND_MESSENGER_UNREAD_COUNT"), object: nil)
+        BrandMessengerManager.setConversationDelegate(self)
     }
 
     public func applicationWillTerminate(_ application: UIApplication) {

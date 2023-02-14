@@ -8,12 +8,46 @@ mixin BrandmessengerNativeCallbackDelegate {
   void receiveUnreadCount(int unreadCount);
 }
 
+mixin BrandmessengerConversationDelegate {
+  Map modifyMessageBeforeSend(Map metadata);
+}
+
 /// An implementation of [FlutterBrandmessengerSdkPlatform] that uses method channels.
 class MethodChannelFlutterBrandmessengerSdk
     extends FlutterBrandmessengerSdkPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel('flutter_brandmessenger_sdk');
+
+  MethodChannelFlutterBrandmessengerSdk() {
+    methodChannel.setMethodCallHandler(callbackDelegateHandler);
+  }
+
+  static BrandmessengerNativeCallbackDelegate? nativeDelegate;
+  static BrandmessengerConversationDelegate? conversationDelegate;
+  Future<Object?> callbackDelegateHandler(MethodCall call) async {
+    switch (call.method) {
+      case "receiveUnreadCount":
+        {
+          final unreadCount = call.arguments as int;
+          nativeDelegate?.receiveUnreadCount(unreadCount);
+          break;
+        }
+      case "modifyMessageBeforeSend":
+        {
+          final metadata = call.arguments as Map;
+          Map? modifiedMetadata = metadata;
+          if (conversationDelegate != null) {
+            modifiedMetadata =
+                conversationDelegate?.modifyMessageBeforeSend(metadata);
+          }
+          return modifiedMetadata;
+        }
+      default:
+        print('TestFairy: Ignoring invoke from native.');
+    }
+    return null;
+  }
 
   @override
   Future<String?> getPlatformVersion() async {
@@ -97,21 +131,13 @@ class MethodChannelFlutterBrandmessengerSdk
   }
 
   void setBrandMessengerNativeCallbackDelegate(
-      final BrandmessengerNativeCallbackDelegate delegate) {
-    Future<void> callbackDelegateHandler(MethodCall call) async {
-      switch (call.method) {
-        case "receiveUnreadCount":
-          {
-            final unreadCount = call.arguments as int;
-            delegate.receiveUnreadCount(unreadCount);
-            break;
-          }
-        default:
-          print('TestFairy: Ignoring invoke from native.');
-      }
-    }
+      BrandmessengerNativeCallbackDelegate delegate) {
+    nativeDelegate = delegate;
+  }
 
-    methodChannel.setMethodCallHandler(callbackDelegateHandler);
+  void setBrandMessengerConversationDelegate(
+      BrandmessengerConversationDelegate? delegate) {
+    conversationDelegate = delegate;
   }
 
   Future<dynamic> registerDeviceForPushNotification() async {
@@ -125,5 +151,14 @@ class MethodChannelFlutterBrandmessengerSdk
 
   void setRegion(String region) {
     methodChannel.invokeMethod('setRegion', region);
+  }
+
+  void enableDefaultCertificatePinning() {
+    methodChannel.invokeMethod('enableDefaultCertificatePinning');
+  }
+
+  Future<dynamic> updateUserAttributes(Map userAttributes) async {
+    return await methodChannel.invokeMethod(
+        "updateUserAttributes", userAttributes);
   }
 }

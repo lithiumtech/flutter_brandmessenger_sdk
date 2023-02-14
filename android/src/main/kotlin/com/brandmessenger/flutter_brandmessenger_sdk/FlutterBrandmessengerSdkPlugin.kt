@@ -11,8 +11,10 @@ import com.brandmessenger.core.BrandMessenger
 import com.brandmessenger.core.api.BrandMessengerConstants
 import com.brandmessenger.core.api.account.register.RegistrationResponse
 import com.brandmessenger.core.api.account.user.BrandMessengerUserPreference
+import com.brandmessenger.core.api.account.user.UserService
 import com.brandmessenger.core.api.authentication.KBMAuthenticationDelegate
 import com.brandmessenger.core.api.authentication.KBMAuthenticationDelegateCallback
+import com.brandmessenger.core.api.conversation.KBMConversationDelegate
 import com.brandmessenger.core.api.conversation.Message
 import com.brandmessenger.core.api.conversation.database.MessageDatabaseService
 import com.brandmessenger.core.listeners.KBMLoginHandler
@@ -20,9 +22,6 @@ import com.brandmessenger.core.listeners.KBMLogoutHandler
 import com.brandmessenger.core.listeners.KBMPushNotificationHandler
 import com.brandmessenger.core.ui.BrandMessengerManager
 import com.brandmessenger.core.ui.conversation.richmessaging.KBMMessageActionDelegate
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
-import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -31,7 +30,8 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-
+import java.util.concurrent.Executors
+import java.util.concurrent.Semaphore
 
 /** FlutterBrandmessengerSdkPlugin */
 class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
@@ -52,7 +52,9 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
     if (activity == null) {
       result.error("NoActivity", "NoActivity", "NoActivity")
     }
-    if (call.method == "getPlatformVersion") {
+    if (call.method == "enableDefaultCertificatePinning") {
+      BrandMessengerManager.enableDefaultCertificatePinning(activity)
+    } else if (call.method == "getPlatformVersion") {
       result.success("Android ${android.os.Build.VERSION.RELEASE}")
     } else if (call.method == "fetchNewMessagesOnChatOpen") {
       val fetchOnOpen = call.arguments as? Boolean
@@ -70,7 +72,7 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
     } else if (call.method == "initWithCompanyKeyAndApplicationId") {
       val args = call.arguments as? ArrayList<*>
       if (args != null && args.size == 2) {
-        BrandMessengerManager.init(activity!!, args[0] as String?, args[1] as String?)
+        BrandMessengerManager.init(activity!!, args[0] as String, args[1] as String)
       }
     } else if (call.method == "isAuthenticated") {
       val isAuthenticated = BrandMessengerManager.isAuthenticated(activity, false)
@@ -147,9 +149,8 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
     } else if (call.method == "sendWelcomeMessageRequest") {
       BrandMessengerManager.sendWelcomeMessageRequest(activity)
     } else if (call.method == "setAppModuleName") {
-//  TODO: Will be enabled with Android SDK 1.13.0 or higher.
-//      val args = call.arguments as? String
-//      BrandMessengerUserPreference.getInstance(activity).appModuleName = args
+      val args = call.arguments as? String
+      BrandMessengerUserPreference.getInstance(activity).appModuleName = args
     } else if (call.method == "setAuthenticationHandlerUrl") {
       val args = call.arguments as? String
       BrandMessengerUserPreference.getInstance(activity).customAuthHandlerUrl = args
@@ -165,6 +166,21 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
       BrandMessengerManager.show(activity)
     } else if (call.method == "showWithWelcome") {
       BrandMessengerManager.showWithWelcome(activity)
+    } else if (call.method == "updateUserAttributes") {
+      val args = call.arguments as? Map<*, *>
+      val displayName = args?.get("displayName") as? String
+      val userImageLink = args?.get("userImageLink") as? String
+      val localURL = args?.get("localURL") as? String
+      val userStatus = args?.get("userStatus") as? String
+      val contactNumber = args?.get("contactNumber") as? String
+      val metadata = args?.get("metadata") as? Map<String, String>
+      activity?.let {
+        Executors.newSingleThreadExecutor().execute(Runnable {
+          val response = UserService.getInstance(it).updateDisplayNameORImageLink(displayName, userImageLink, localURL, userStatus, contactNumber, metadata)
+          response?.let { result.success(response) }
+                  ?:run { result.error("BM_UPDATE_USER_ERROR", "Failed to update user details", "Error while updating user attributes")}
+        })
+      }
     } else {
       result.notImplemented()
     }
@@ -186,6 +202,9 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     activity = binding.activity
+
+    BrandMessengerManager.setConversationDelegate(conversationDelegate);
+
     LocalBroadcastManager.getInstance(activity!!).registerReceiver(unreadCountBroadcastReceiver, IntentFilter(BrandMessengerConstants.BRAND_MESSENGER_UNREAD_COUNT))
     BrandMessenger.connectPublishWithVerifyTokenAfter(
       activity!!,
@@ -239,5 +258,34 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
         p0?.updateToken("")
       }
     } }
+  }
+
+  private var conversationDelegate: KBMConversationDelegate = object : KBMConversationDelegate {
+    override fun modifyMessageBeforeSend(p0: Message): Message {
+      var available: Semaphore = Semaphore(0)
+
+      var messageMetadata: Map<String, String>? = p0.metadata
+      activity?.runOnUiThread {
+      channel.invokeMethod(
+        "modifyMessageBeforeSend",
+        p0.metadata,
+        object : MethodChannel.Result {
+          override fun success(result: Any?) {
+            p0.metadata = result as Map<String, String>
+            available.release()
+          }
+
+          override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+            available.release()
+          }
+
+          override fun notImplemented() {
+            available.release()
+          }
+        })
+      }
+      available.acquire()
+      return p0
+    }
   }
 }

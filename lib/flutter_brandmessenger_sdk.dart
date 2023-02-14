@@ -83,6 +83,11 @@ class FlutterBrandmessengerSdk {
     _methodChannel.setBrandMessengerNativeCallbackDelegate(delegate);
   }
 
+  void setBrandMessengerConversationDelegate(
+      BrandmessengerConversationDelegate? delegate) {
+    _methodChannel.setBrandMessengerConversationDelegate(delegate);
+  }
+
 // Android only. iOS will return Future.error
   Future<dynamic> registerDeviceForPushNotification() async {
     return _methodChannel.registerDeviceForPushNotification();
@@ -90,5 +95,13 @@ class FlutterBrandmessengerSdk {
 
   void setRegion(String region) {
     _methodChannel.setRegion(region);
+  }
+
+  void enableDefaultCertificatePinning() {
+    _methodChannel.enableDefaultCertificatePinning();
+  }
+
+  Future<dynamic> updateUserAttributes(Map userAttributes) async {
+    return _methodChannel.updateUserAttributes(userAttributes);
   }
 }
