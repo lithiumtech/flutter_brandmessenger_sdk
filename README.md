@@ -4,9 +4,9 @@ Flutter plugin for Khoros BrandMessenger SDK
 This is a flutter sdk wrapper around the native SDK libraries.
 
 iOS: Requires access to https://github.com/lithiumtech/ios-brandmessenger-sdk-dist
-flutter_brandmessenger_sdk v0.2.0 uses iOS SDK v1.13.0
+flutter_brandmessenger_sdk v1.14.0 uses iOS SDK v1.14.0
 Android: Requires access to https://github.com/lithiumtech/android-brandmessenger-sdk-dist
-flutter_brandmessenger_sdk v0.2.0 uses Android SDK v1.13.0
+flutter_brandmessenger_sdk v1.14.0 uses Android SDK v1.14.0
 
 Please contact Khoros Support and request access
 
@@ -17,7 +17,7 @@ Add the following into `pubspec.yaml`
     flutter_brandmessenger_sdk:
       git:
         url: git@github.com:lithiumtech/flutter_brandmessenger_sdk.git
-        ref: main
+        ref: 1.14.0
 
 Run following command to download the sdk
 
@@ -44,15 +44,23 @@ And call sdk methods, eg:
 
 ### Initialization
 
-To initialize BrandMessenger and connect to the correct company instance, you need the `companyKey` and `applicationId`. Please contact Khoros Support to request these values for your company.
+To initialize BrandMessenger and connect to the correct company instance, you need the `companyKey` and `applicationId` and optional `widgetId`. Please contact Khoros Support to request these values for your company.
 
 First, initialize with `companyKey` and `applicationId`
 
     App.bmsdk.initWithCompanyKeyAndApplicationId("<companyKey>", "<applicationId>");
 
+or, initialize with `companyKey`, `applicationId` and `widgetId`
+
+    App.bmsdk.initWithCompanyKeyApplicationIdWidgetId("<companyKey>", "<applicationId>", "<widgetId>");
+
 If your application uses a non-default module-name, you also need to set AppModuleName on the SDK.
 
     App.bmsdk.setAppModuleName("<Custom App Module Name>");
+
+You can also set widgetId separately
+
+    App.bmsdk.setWidgetId("<widgetId>);
 
 #### Region
 
@@ -105,34 +113,85 @@ The SDK offers various ways to login depending on how the integration to custome
 
 #### Logout
 
-    App.bmsdk.logout();
+    App.bmsdk.logout().then((value) {
+      // Dismiss is an async task, so you should watch for this Future to return before proceeding.
+    });;
 
 ### Show
 
 Once logged in, you can show the SDK's built-in chat screen.
 
-    App.bmsdk.show();
+    App.bmsdk.show().then((value) {
+      // value is true if successful. An Exception object if failure
+    });
 
 If your Care instance is setup to use welcome-messaging, you can show chat and prompt the welcome message request.
 
-    App.bmsdk.showWithWelcome();
+    App.bmsdk.showWithWelcome().then((value) {
+      // value is true if successful. An Exception object if failure
+    });
 
 Alternatively, you can prompt just for the welcome message without showing the chat-screen, for example when using your own custom built chat-screen.
 
     App.bmsdk.sendWelcomeMessageRequest();
+
+### Dismiss
+
+If needed, you can programmatically dismiss the chat screen.
+
+    App.bmsdk.dismiss();
+
+### isAllDisplayConditionsMet
+
+You can check if the widget display conditions are currently met.
+  
+    App.bmsdk.isAllDisplayConditionsMet().then((value) {
+      // process value
+    });
+
+### getAllDisplayConditions
+
+You can get the display conditions to calculate if the criterias are met separately.
+
+    App.bmsdk.getAllDisplayConditions().then((value) {
+      // process value
+    });
+
+### isWidgetHashEnabled
+
+Check if Widget Hash is enabled in the Agent Care console.
+
+    App.bmsdk.isWidgetHashEnabled().then((value) {
+      // process value
+    });
+
+### isDeviceGeoIPAllowed
+
+Check if device's Geo IP is whitelisted.
+
+    App.bmsdk.isDeviceGeoIPAllowed().then((value) {
+      // process value
+    });
+
+### shouldThrottle
+
+Check if chat needs to be throttled currently.
+
+    App.bmsdk.shouldThrottle().then((value) {
+      // process value
+    });
 
 ### Unread Count
 
 In order to retrieve unread messages count, you need to implement a class with `BrandmessengerNativeCallbackDelegate`
 
     class UnreadCounter with BrandmessengerNativeCallbackDelegate {
-    static UnreadCounter instance = UnreadCounter();
-    @override
-    void receiveUnreadCount(int unreadCount) {
-      // TODO: implement receiveUnreadCount
+        static UnreadCounter instance = UnreadCounter();
+        @override
+        void receiveUnreadCount(int unreadCount) {
+          // TODO: implement receiveUnreadCount
+        }
     }
-
-}
 
 and set it to `setBrandMessengerNativeCallbackDelegate`.
 

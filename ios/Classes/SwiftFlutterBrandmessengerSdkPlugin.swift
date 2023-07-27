@@ -15,13 +15,30 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
     }
         
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        if (call.method == "enableDefaultCertificatePinning") {
+        if (call.method == "dismiss") { 
+            BrandMessengerManager.dismiss()
+        } else if (call.method == "enableDefaultCertificatePinning") {
             BrandMessengerManager.enableDefaultCertificatePinning()
         } else if (call.method == "fetchNewMessagesOnChatOpen") {
             if let fetchOnOpen = call.arguments as? Bool {
                 KBMUserDefaultsHandler.setFetchNewOnChatOpen(fetchOnOpen)
             }
-         } else if (call.method == "getUnreadCount") {
+        } else if (call.method == "getAllDisplayConditions") {
+            BrandMessengerManager.getAllDisplayConditions { displayConditions, error in
+                if let error = error {
+                    result(FlutterError(code: "KBMError", message: "Error during getAllDisplayConditions", details: error.localizedDescription))
+                } else {
+                    var dcArray = []
+                    if let displayConditions = displayConditions {
+                        for case let dc as KBMDisplayCondition in displayConditions {
+                            let dcDict = [dc.typeId: dc.satisfied]
+                            dcArray.append(dcDict)
+                        }
+                    }
+                    result(dcArray)
+                }
+            }
+        } else if (call.method == "getUnreadCount") {
             BrandMessengerManager.getTotalUnreadCount { count, error in
                 if let channel = SwiftFlutterBrandmessengerSdkPlugin._channel {
                     channel.invokeMethod("receiveUnreadCount", arguments: count)
@@ -30,29 +47,71 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
             result(KBMUserDefaultsHandler.getUserId())
         } else if (call.method == "getUserId") {
             result(KBMUserDefaultsHandler.getUserId())
-        } else if (call.method == "initWithCompanyKeyAndApplicationId") {
-            BrandMessengerManager.doNotAutosubscribeOnLaunch(false)
-            if let args = call.arguments as? [NSString], args.count == 2 {
-                BrandMessengerManager(companyKey: args[0], applicationKey: args[1])
+        } else if (call.method == "initWithCompanyKeyApplicationIdWidgetId") {
+            if let args = call.arguments as? NSDictionary {
+                let companyKey = args["companyKey"] as! NSString
+                let applicationId = args["applicationId"] as? NSString
+                let widgetId = args["widgetId"] as? NSString
+                let _ = BrandMessengerManager(companyKey: companyKey, applicationKey: applicationId, widgetId: widgetId) { response, error in
+                    if let error = error {
+                        result(FlutterError(code: "KBMError", message: "Error during initWithCompanyKeyApplicationIdWidgetId", details: error.localizedDescription))
+                    } else {
+                        result(response)
+                    }
+                }
+            }
+
+        } else if (call.method == "isAllDisplayConditionsMet") {
+            BrandMessengerManager.isAllDisplayConditionsMet { hasAllDisplayConditionsMet, error in
+                if let error = error {
+                    result(FlutterError(code: "KBMError", message: "Error during hasAllDisplayConditionsMet", details: error.localizedDescription))
+                } else {
+                    result(hasAllDisplayConditionsMet)
+                }
             }
         } else if (call.method == "isAuthenticated") {
             BrandMessengerManager.isAuthenticated { response in
                 result(NSNumber(value:response))
             }
+        } else if (call.method == "isDeviceGeoIPAllowed") {
+            BrandMessengerManager.isDeviceGeoIPAllowed {
+                isDeviceGeoIPAllowed, error in
+                result(isDeviceGeoIPAllowed)
+            }
+        } else if (call.method == "isWidgetHashEnabled") {
+            BrandMessengerManager.isWidgetHashEnabled { isWidgetHashEnabled, error in
+                if let error = error {
+                    result(FlutterError(code: "KBMError", message: "Error during isWidgetHashEnabled", details: error.localizedDescription))
+                } else {
+                    result(isWidgetHashEnabled)
+                }
+            }
         } else if (call.method == "login") {
             if let userId = call.arguments as? String {
                 BrandMessengerManager.login(userId) { response, error in
-                    result("BrandMessenger: Login " + (error != nil ? "Error" : "Success"))
+                    if let error = error {
+                        result(FlutterError(code: "KBMError", message: "Error during login", details: error.localizedDescription))
+                    } else {
+                        result("BrandMessenger: Login Success")
+                    }
                 }
             }
         } else if (call.method == "loginAnonymousUser") {
             BrandMessengerManager.loginAnonymousUser { response, error in
-                result("BrandMessenger: Login " + (error != nil ? "Error" : "Success"))
+                if let error = error {
+                    result(FlutterError(code: "KBMError", message: "Error during loginAnonymousUser", details: error.localizedDescription))
+                } else {
+                    result("BrandMessenger: Login Success")
+                }
             }
         } else if (call.method == "loginWithJWT") {
             if let args = call.arguments as? [String], args.count == 2 {
                 BrandMessengerManager.loginWithJWT(args[0], userId: args[1]) { response, error in
-                    result("BrandMessenger: Login " + (error != nil ? "Error" : "Success"))
+                    if let error = error {
+                        result(FlutterError(code: "KBMError", message: "Error during loginWithJWT", details: error.localizedDescription))
+                    } else {
+                        result("BrandMessenger: Login Success")
+                    }
                 }
             }
         } else if (call.method == "logout") {
@@ -62,7 +121,11 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
             
         } else if (call.method == "sendWelcomeMessageRequest") {
             BrandMessengerManager.sendWelcomeMessageRequest { response, error in
-                print("sendWelcomeMessageRequest Response: \(response) \(error)")
+                if let error = error {
+                    result(FlutterError(code: "KBMError", message: "Error during sendWelcomeMessageRequest", details: error.localizedDescription))
+                } else {
+                    result("BrandMessenger: sendWelcomeMessageRequest Success")
+                }
             }
         } else if (call.method == "setAppModuleName") {
             if let arg = call.arguments as? String {
@@ -84,10 +147,31 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
             if let usePersistentStorage = call.arguments as? Bool {
                 KBMUserDefaultsHandler.setUsePersistentMessagesStorage(usePersistentStorage)
             }
+        } else if (call.method == "setWidgetId") {
+            if let arg = call.arguments as? String {
+                BrandMessengerManager.setWidgetId(arg)
+            }
+        } else if (call.method == "shouldThrottle") {
+            BrandMessengerManager.shouldThrottle { 
+                shouldThrottle, error in 
+                result(shouldThrottle)
+            }
         } else if (call.method == "show") {
-            BrandMessengerManager.show()
+            BrandMessengerManager.show { error in
+                if let error = error {
+                    result(FlutterError(code: "KBMError", message: "Error during show", details: error.localizedDescription))
+                } else {
+                    result(true)
+                }
+            }
         } else if (call.method == "showWithWelcome") {
-            BrandMessengerManager.showWithWelcome()
+            BrandMessengerManager.showWithWelcome { error in
+                if let error = error {
+                    result(FlutterError(code: "KBMError", message: "Error during show", details: error.localizedDescription))
+                } else {
+                    result(true)
+                }
+            }
         } else if (call.method == "updateUserAttributes") {
             if let arg = call.arguments as? NSDictionary {
                 let displayName = arg.value(forKey: "displayName") as? String

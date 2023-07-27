@@ -56,10 +56,14 @@ class MethodChannelFlutterBrandmessengerSdk
     return version;
   }
 
-  Future<dynamic> initWithCompanyKeyAndApplicationId(
-      companyKey, applicationId) async {
+  Future<dynamic> initWithCompanyKeyApplicationIdWidgetId(
+      companyKey, applicationId, widgetId) async {
     return await methodChannel.invokeMethod(
-        'initWithCompanyKeyAndApplicationId', [companyKey, applicationId]);
+        'initWithCompanyKeyApplicationIdWidgetId', {
+      "companyKey": companyKey,
+      "applicationId": applicationId,
+      "widgetId": widgetId
+    });
   }
 
   Future<dynamic> setBaseURL(baseUrl) async {
@@ -91,6 +95,10 @@ class MethodChannelFlutterBrandmessengerSdk
     return await methodChannel.invokeMethod('show');
   }
 
+  Future<dynamic> dismiss() async {
+    return await methodChannel.invokeMethod('dismiss');
+  }
+
   Future<bool?> isAuthenticated() async {
     final isAuthenticated =
         await methodChannel.invokeMethod<bool>('isAuthenticated');
@@ -109,8 +117,8 @@ class MethodChannelFlutterBrandmessengerSdk
     methodChannel.invokeMethod('monitorUnreadCount');
   }
 
-  void showWithWelcome() {
-    methodChannel.invokeMethod('showWithWelcome');
+  Future<dynamic> showWithWelcome() async {
+    return await methodChannel.invokeMethod("showWithWelcome");
   }
 
   void sendWelcomeMessageRequest() {
@@ -126,8 +134,8 @@ class MethodChannelFlutterBrandmessengerSdk
         'setUsePersistentMessagesStorage', usePersistentStorage);
   }
 
-  void logout() {
-    methodChannel.invokeMethod('logout');
+  Future<dynamic> logout() {
+    return methodChannel.invokeMethod('logout');
   }
 
   void setBrandMessengerNativeCallbackDelegate(
@@ -160,5 +168,29 @@ class MethodChannelFlutterBrandmessengerSdk
   Future<dynamic> updateUserAttributes(Map userAttributes) async {
     return await methodChannel.invokeMethod(
         "updateUserAttributes", userAttributes);
+  }
+
+  void setWidgetId(String widgetId) async {
+    methodChannel.invokeMethod("setWidgetId", widgetId);
+  }
+
+  Future<dynamic> getAllDisplayConditions() async {
+    return await methodChannel.invokeMethod("getAllDisplayConditions");
+  }
+
+  Future<dynamic> isWidgetHashEnabled() async {
+    return await methodChannel.invokeMethod("isWidgetHashEnabled");
+  }
+
+  Future<dynamic> isAllDisplayConditionsMet() async {
+    return await methodChannel.invokeMethod("isAllDisplayConditionsMet");
+  }
+
+  Future<dynamic> isDeviceGeoIPAllowed() async {
+    return await methodChannel.invokeMethod("isDeviceGeoIPAllowed");
+  }
+
+  Future<dynamic> shouldThrottle() async {
+    return await methodChannel.invokeMethod("shouldThrottle");
   }
 }

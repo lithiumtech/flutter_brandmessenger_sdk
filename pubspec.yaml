@@ -1,10 +1,10 @@
 name: flutter_brandmessenger_sdk
 description: A new Flutter plugin project.
-version: 0.2.0
+version: 1.14.0
 homepage:
 
 environment:
-  sdk: ">=2.18.2 <3.0.0"
+  sdk: '>=3.0.0 <4.0.0'
   flutter: ">=2.5.0"
 
 dependencies:

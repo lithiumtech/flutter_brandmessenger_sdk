@@ -8,10 +8,16 @@ class FlutterBrandmessengerSdk {
     return _methodChannel.getPlatformVersion();
   }
 
+  Future<dynamic> initWithCompanyKeyApplicationIdWidgetId(
+      companyKey, applicationId, widgetId) async {
+    return _methodChannel.initWithCompanyKeyApplicationIdWidgetId(
+        companyKey, applicationId, widgetId);
+  }
+
   Future<dynamic> initWithCompanyKeyAndApplicationId(
       companyKey, applicationId) async {
-    return _methodChannel.initWithCompanyKeyAndApplicationId(
-        companyKey, applicationId);
+    return initWithCompanyKeyApplicationIdWidgetId(
+        companyKey, applicationId, null);
   }
 
   Future<dynamic> setBaseURL(baseUrl) async {
@@ -42,6 +48,10 @@ class FlutterBrandmessengerSdk {
     return _methodChannel.show();
   }
 
+  Future<dynamic> dismiss() async {
+    return _methodChannel.dismiss();
+  }
+
   Future<bool?> isAuthenticated() async {
     return _methodChannel.isAuthenticated();
   }
@@ -58,8 +68,8 @@ class FlutterBrandmessengerSdk {
     _methodChannel.monitorUnreadCount();
   }
 
-  void showWithWelcome() {
-    _methodChannel.showWithWelcome();
+  Future<dynamic> showWithWelcome() async {
+    return _methodChannel.showWithWelcome();
   }
 
   void sendWelcomeMessageRequest() {
@@ -74,8 +84,8 @@ class FlutterBrandmessengerSdk {
     _methodChannel.setUsePersistentMessagesStorage(usePersistentStorage);
   }
 
-  void logout() {
-    _methodChannel.logout();
+  Future<dynamic> logout() {
+    return _methodChannel.logout();
   }
 
   void setBrandMessengerNativeCallbackDelegate(
@@ -103,5 +113,29 @@ class FlutterBrandmessengerSdk {
 
   Future<dynamic> updateUserAttributes(Map userAttributes) async {
     return _methodChannel.updateUserAttributes(userAttributes);
+  }
+
+  void setWidgetId(String widgetId) async {
+    _methodChannel.setWidgetId(widgetId);
+  }
+
+  Future<dynamic> getAllDisplayConditions() {
+    return _methodChannel.getAllDisplayConditions();
+  }
+
+  Future<dynamic> isWidgetHashEnabled() {
+    return _methodChannel.isWidgetHashEnabled();
+  }
+
+  Future<dynamic> isAllDisplayConditionsMet() {
+    return _methodChannel.isAllDisplayConditionsMet();
+  }
+
+  Future<dynamic> isDeviceGeoIPAllowed() {
+    return _methodChannel.isDeviceGeoIPAllowed();
+  }
+
+  Future<dynamic> shouldThrottle() {
+    return _methodChannel.shouldThrottle();
   }
 }
