@@ -222,6 +222,9 @@ class FlutterBrandmessengerSdkPlugin: FlutterPlugin, MethodCallHandler, Activity
     } else if (call.method == "setBaseURL") {
       val args = call.arguments as? String
       BrandMessengerUserPreference.getInstance(activity).url = args
+    } else if (call.method == "setConfigurationUrl") {
+      val args = call.arguments as? String
+      BrandMessengerUserPreference.getInstance(activity).configurationUrl = args
     } else if (call.method == "setRegion") {
       val args = call.arguments as? String
       BrandMessengerManager.setRegion(activity, args)

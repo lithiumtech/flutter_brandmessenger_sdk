@@ -28,6 +28,10 @@ class FlutterBrandmessengerSdk {
     return _methodChannel.setAuthenticationHandlerUrl(authHandlerUrl);
   }
 
+  void setConfigurationUrl(configurationUrl) async {
+    _methodChannel.setConfigurationUrl(configurationUrl);
+  }
+
   Future<dynamic> setAppModuleName(moduleName) async {
     return _methodChannel.setAppModuleName(moduleName);
   }

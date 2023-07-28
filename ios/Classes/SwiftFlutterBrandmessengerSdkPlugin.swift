@@ -139,6 +139,10 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
             if let arg = call.arguments as? String {
                 KBMUserDefaultsHandler.setBASEURL(arg)
             }
+        } else if (call.method == "setConfigurationUrl") {
+            if let arg = call.arguments as? String {
+                KBMUserDefaultsHandler.setConfigurationURL(arg)
+            }
         } else if (call.method == "setRegion") {
             if let arg = call.arguments as? String {
                 BrandMessengerManager.setRegion(arg)

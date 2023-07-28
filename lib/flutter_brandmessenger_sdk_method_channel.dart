@@ -75,6 +75,10 @@ class MethodChannelFlutterBrandmessengerSdk
         'setAuthenticationHandlerUrl', authHandlerUrl);
   }
 
+  void setConfigurationUrl(configurationUrl) async {
+    await methodChannel.invokeMethod('setConfigurationUrl', configurationUrl);
+  }
+
   Future<dynamic> setAppModuleName(moduleName) async {
     return await methodChannel.invokeMethod('setAppModuleName', moduleName);
   }
