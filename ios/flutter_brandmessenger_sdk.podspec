@@ -20,7 +20,7 @@ Flutter plugin for Khoros BrandMessenger SDK
 
   # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
-  s.ios.vendored_frameworks = 'ios-brandmessenger-sdk-dist/BrandMessengerUI.xcframework', 'ios-brandmessenger-sdk-dist/BrandMessengerCore.xcframework','ios-brandmessenger-sdk-dist/RichMessageKit.xcframework', 'ios-brandmessenger-sdk-dist/Kingfisher.xcframework', 'ios-brandmessenger-sdk-dist/SwipeCellKit.xcframework', 'ios-brandmessenger-sdk-dist/ISEmojiView.xcframework'
+  s.ios.vendored_frameworks = 'ios-brandmessenger-sdk-dist/BrandMessengerUI.xcframework', 'ios-brandmessenger-sdk-dist/BrandMessengerCore.xcframework','ios-brandmessenger-sdk-dist/RichMessageKit.xcframework', 'ios-brandmessenger-sdk-dist/Kingfisher.xcframework', 'ios-brandmessenger-sdk-dist/ISEmojiView.xcframework'
   s.ios.frameworks = ["UIKit", "Security", "Foundation", "Network", "MobileCoreServices", "SystemConfiguration", "CoreFoundation"]
   s.swift_version = '5.0'
 end
