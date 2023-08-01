@@ -242,7 +242,7 @@ On iOS, `registerDeviceForPushNotification` will return `Future.error()`.
 ### Certificate Pinning
 
 Certificate pinning against Khoros Authentication and Messaging endpoints can be enabled.
-(Available for APAC only in v0.2.0)
+(Available for APAC only in v1.14.0)
 
     App.bmsdk.enableDefaultCertificatePinning();
 
