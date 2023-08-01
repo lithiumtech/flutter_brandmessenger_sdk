@@ -76,7 +76,11 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
         } else if (call.method == "isDeviceGeoIPAllowed") {
             BrandMessengerManager.isDeviceGeoIPAllowed {
                 isDeviceGeoIPAllowed, error in
-                result(isDeviceGeoIPAllowed)
+                if let error = error {
+                    result(FlutterError(code: "KBMError", message: "Error during isDeviceGeoIPAllowed", details: error.localizedDescription))
+                } else {
+                    result(isDeviceGeoIPAllowed)
+                }
             }
         } else if (call.method == "isWidgetHashEnabled") {
             BrandMessengerManager.isWidgetHashEnabled { isWidgetHashEnabled, error in
