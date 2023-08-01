@@ -17,3 +17,13 @@ Initial Flutter SDK release. Includes:
 * modifyMessageBeforeSend
 * enableDefaultCertificatePinning
 * updateUserAttributes
+
+## 1.14.0
+
+* Added support for Widget ID
+* dismiss
+* isAllDisplayConditionsMet
+* getAllDisplayConditions
+* isWidgetHashEnabled
+* isDeviceGeoIPAllowed
+* shouldThrottle
