@@ -162,7 +162,11 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
         } else if (call.method == "shouldThrottle") {
             BrandMessengerManager.shouldThrottle { 
                 shouldThrottle, error in 
-                result(shouldThrottle)
+                if let error = error {
+                    result(FlutterError(code: "KBMError", message: "Error during shouldThrottle", details: error.localizedDescription))
+                } else {
+                    result(shouldThrottle)
+                }
             }
         } else if (call.method == "show") {
             BrandMessengerManager.show { error in
