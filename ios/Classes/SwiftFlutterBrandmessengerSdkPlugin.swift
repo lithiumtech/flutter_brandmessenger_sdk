@@ -5,6 +5,7 @@ import BrandMessengerCore
 
 public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMConversationDelegate {
     static var _channel: FlutterMethodChannel? = nil
+    static let SUCCESS = "Success"
     
     // MARK: FlutterPlugin
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -13,10 +14,12 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
         registrar.addMethodCallDelegate(instance, channel: _channel!)
         registrar.addApplicationDelegate(instance)
     }
-        
+    
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        if (call.method == "dismiss") { 
-            BrandMessengerManager.dismiss()
+        if (call.method == "dismiss") {
+            DispatchQueue.main.async {
+                BrandMessengerManager.dismiss()
+            }
         } else if (call.method == "enableDefaultCertificatePinning") {
             BrandMessengerManager.enableDefaultCertificatePinning()
         } else if (call.method == "fetchNewMessagesOnChatOpen") {
@@ -44,7 +47,6 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
                     channel.invokeMethod("receiveUnreadCount", arguments: count)
                 }
             }
-            result(KBMUserDefaultsHandler.getUserId())
         } else if (call.method == "getUserId") {
             result(KBMUserDefaultsHandler.getUserId())
         } else if (call.method == "initWithCompanyKeyApplicationIdWidgetId") {
@@ -56,11 +58,11 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
                     if let error = error {
                         result(FlutterError(code: "KBMError", message: "Error during initWithCompanyKeyApplicationIdWidgetId", details: error.localizedDescription))
                     } else {
-                        result(response)
+                        result(SwiftFlutterBrandmessengerSdkPlugin.SUCCESS)
                     }
                 }
             }
-
+            
         } else if (call.method == "isAllDisplayConditionsMet") {
             BrandMessengerManager.isAllDisplayConditionsMet { hasAllDisplayConditionsMet, error in
                 if let error = error {
@@ -124,7 +126,7 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
             }
             
         } else if (call.method == "sendWelcomeMessageRequest") {
-            BrandMessengerManager.sendWelcomeMessageRequest { response, error in
+            BrandMessengerManager.sendWelcomeMessageRequest { error in
                 if let error = error {
                     result(FlutterError(code: "KBMError", message: "Error during sendWelcomeMessageRequest", details: error.localizedDescription))
                 } else {
@@ -160,8 +162,8 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
                 BrandMessengerManager.setWidgetId(arg)
             }
         } else if (call.method == "shouldThrottle") {
-            BrandMessengerManager.shouldThrottle { 
-                shouldThrottle, error in 
+            BrandMessengerManager.shouldThrottle {
+                shouldThrottle, error in
                 if let error = error {
                     result(FlutterError(code: "KBMError", message: "Error during shouldThrottle", details: error.localizedDescription))
                 } else {
@@ -169,32 +171,39 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
                 }
             }
         } else if (call.method == "show") {
-            BrandMessengerManager.show { error in
-                if let error = error {
-                    result(FlutterError(code: "KBMError", message: "Error during show", details: error.localizedDescription))
-                } else {
-                    result(true)
+            DispatchQueue.main.async {
+                BrandMessengerManager.show { error in
+                    if let error = error {
+                        result(FlutterError(code: "KBMError", message: "Error during show", details: error.localizedDescription))
+                    } else {
+                        result(true)
+                    }
                 }
             }
         } else if (call.method == "showWithWelcome") {
-            BrandMessengerManager.showWithWelcome { error in
-                if let error = error {
-                    result(FlutterError(code: "KBMError", message: "Error during show", details: error.localizedDescription))
-                } else {
-                    result(true)
+            DispatchQueue.main.async {
+                BrandMessengerManager.showWithWelcome { error in
+                    if let error = error {
+                        result(FlutterError(code: "KBMError", message: "Error during show", details: error.localizedDescription))
+                    } else {
+                        result(true)
+                    }
                 }
             }
         } else if (call.method == "updateUserAttributes") {
             if let arg = call.arguments as? NSDictionary {
                 let displayName = arg.value(forKey: "displayName") as? String
                 let userImageLink = arg.value(forKey: "userImageLink") as? String
-                let userStatus = arg.value(forKey: "userStatus") as? String
                 let metadata = arg.value(forKey: "metadata") as? NSMutableDictionary
-                KBMUserClientService().updateUserDisplayName(displayName, andUserImageLink: userImageLink, userStatus: userStatus, metadata: metadata) { response, error in
+                if displayName == nil && userImageLink == nil && metadata == nil {
+                    result(FlutterError(code: "BM_UPDATE_USER_ERROR", message: "Passed nil/empty user attributes", details: nil))
+                    return
+                }
+                KBMUserClientService().updateUserDisplayName(displayName, andUserImageLink: userImageLink, userStatus: nil, metadata: metadata) { response, error in
                     if let error = error {
                         result(FlutterError(code: "BM_UPDATE_USER_ERROR", message: "Failed to update user details", details: error))
                     } else {
-                        result(response)
+                        result(SwiftFlutterBrandmessengerSdkPlugin.SUCCESS)
                     }
                 }
             }
@@ -276,20 +285,20 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
         NotificationCenter.default.addObserver(self, selector: #selector(onUnreadCount(notification:)), name: NSNotification.Name("BRAND_MESSENGER_UNREAD_COUNT"), object: nil)
         BrandMessengerManager.setConversationDelegate(self)
     }
-
+    
     public func applicationWillTerminate(_ application: UIApplication) {
         debugPrint("applicationWillTerminate")
     }
-
+    
     public func applicationWillResignActive(_ application: UIApplication) {
         debugPrint("applicationWillResignActive")
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("BRAND_MESSENGER_UNREAD_COUNT"), object: nil)
     }
-
+    
     public func applicationDidEnterBackground(_ application: UIApplication) {
         debugPrint("applicationDidEnterBackground")
     }
-
+    
     public func applicationWillEnterForeground(_ application: UIApplication) {
         print("applicationWillEnterForeground")
     }

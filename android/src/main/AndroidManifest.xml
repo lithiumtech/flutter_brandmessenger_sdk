@@ -1,3 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
   package="com.brandmessenger.flutter_brandmessenger_sdk">
+
+    <application>
+        <!-- NOTE: Do NOT change this, it should remain same i.e 'com.package.name' -->
+        <meta-data android:name="com.package.name"
+            tools:node="merge"
+            android:value="${applicationId}" />
+    </application>
+
 </manifest>
