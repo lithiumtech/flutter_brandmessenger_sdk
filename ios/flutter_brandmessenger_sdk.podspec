@@ -14,13 +14,12 @@ Flutter plugin for Khoros BrandMessenger SDK
   s.author           = { 'Khoros' => 'support@khoros.com' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
-  s.prepare_command = 'rm -rf ./ios-brandmessenger-sdk-dist && git clone --depth=1 --branch=1.14.0 https://github.com/lithiumtech/ios-brandmessenger-sdk-dist.git && rm -rf ./ios-brandmessenger-sdk-dist/.git'
   s.dependency 'Flutter'
-  s.platform = :ios, '9.0'
+  s.dependency 'BrandMessenger', '~> 1.16.4'
+  s.platform = :ios, '12.0'
 
   # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
-  s.ios.vendored_frameworks = 'ios-brandmessenger-sdk-dist/BrandMessengerUI.xcframework', 'ios-brandmessenger-sdk-dist/BrandMessengerCore.xcframework','ios-brandmessenger-sdk-dist/RichMessageKit.xcframework', 'ios-brandmessenger-sdk-dist/Kingfisher.xcframework', 'ios-brandmessenger-sdk-dist/ISEmojiView.xcframework'
   s.ios.frameworks = ["UIKit", "Security", "Foundation", "Network", "MobileCoreServices", "SystemConfiguration", "CoreFoundation"]
   s.swift_version = '5.0'
 end
