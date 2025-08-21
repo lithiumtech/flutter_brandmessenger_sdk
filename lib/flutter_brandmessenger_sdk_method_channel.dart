@@ -20,6 +20,7 @@ class MethodChannelFlutterBrandmessengerSdk
   final methodChannel = const MethodChannel('flutter_brandmessenger_sdk');
 
   MethodChannelFlutterBrandmessengerSdk() {
+    print('BrandMessenger Plugin Initialized');
     methodChannel.setMethodCallHandler(callbackDelegateHandler);
   }
 
