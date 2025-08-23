@@ -2,7 +2,7 @@ group 'com.brandmessenger.flutter_brandmessenger_sdk'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.8.0'
+    ext.kotlin_version = '1.6.10'
     repositories {
         google()
         jcenter()
@@ -10,7 +10,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.3'
+        classpath 'com.android.tools.build:gradle:7.1.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -22,6 +22,7 @@ rootProject.allprojects {
         mavenCentral()
         maven {
             url 'https://jitpack.io'
+            credentials { username authToken }
         }
     }
 }
@@ -30,8 +31,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion = 34
-    namespace 'com.brandmessenger.flutter_brandmessenger_sdk'
+    compileSdkVersion 31
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -47,11 +47,11 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 19
     }
 
     dependencies {
-        implementation 'com.khoros.android-brandmessenger-sdk:brandmessengercore:1.16.4'
-        implementation 'com.khoros.android-brandmessenger-sdk:brandmessengerui:1.16.4'
+        implementation 'com.github.lithiumtech.android-brandmessenger-sdk-dist:brandmessengercore:1.14.0'
+        implementation 'com.github.lithiumtech.android-brandmessenger-sdk-dist:brandmessengerui:1.14.0'
     }
 }
