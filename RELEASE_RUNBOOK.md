@@ -8,6 +8,7 @@ This document outlines the steps to release a new version of the `flutter_brandm
 - [ ] Ensure all relevant bug fixes are merged into the `main` branch.
 - [ ] Run all tests for the plugin and the example app to ensure they are passing.
 - [ ] Manually test the example app on both iOS and Android to confirm functionality.
+- [ ] Review the [Brand Messenger SDK - Pre-Production Testing Documentation](https://www.notion.so/trilogy-enterprises/Brand-Messenger-SDK-Pre-Production-Testing-Documentation-25585e927d318030b25bf7b9cfce60af).
 
 ## Release Steps
 
