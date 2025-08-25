@@ -199,7 +199,7 @@ public class SwiftFlutterBrandmessengerSdkPlugin: NSObject, FlutterPlugin, KBMCo
                 }
             }
         } else {
-            result("iOS version " + UIDevice.current.systemVersion)
+            result("iOS " + UIDevice.current.systemVersion)
         }
     }
     
