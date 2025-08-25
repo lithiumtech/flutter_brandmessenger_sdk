@@ -51,7 +51,7 @@ android {
     }
 
     dependencies {
-        implementation 'com.github.lithiumtech.android-brandmessenger-sdk-dist:brandmessengercore:1.14.0'
-        implementation 'com.github.lithiumtech.android-brandmessenger-sdk-dist:brandmessengerui:1.14.0'
+        implementation 'com.github.lithiumtech.android-brandmessenger-sdk-dist:brandmessengercore:1.15.0'
+        implementation 'com.github.lithiumtech.android-brandmessenger-sdk-dist:brandmessengerui:1.15.0'
     }
 }
