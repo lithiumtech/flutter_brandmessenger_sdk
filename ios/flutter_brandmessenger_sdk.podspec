@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_brandmessenger_sdk'
-  s.version          = '1.15.0'
+  s.version          = '1.16.0'
   s.summary          = 'Flutter plugin for Khoros BrandMessenger SDK.'
   s.description      = <<-DESC
 Flutter plugin for Khoros BrandMessenger SDK
