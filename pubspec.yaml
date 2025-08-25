@@ -17,11 +17,6 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^2.0.0
 
-flutter_brandmessenger_sdk:
-  git:
-    url: git@github.com:lithiumtech/flutter_brandmessenger_sdk.git
-    ref: 1.15.0
-
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

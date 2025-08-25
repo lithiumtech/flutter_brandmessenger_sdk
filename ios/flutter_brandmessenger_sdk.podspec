@@ -14,7 +14,7 @@ Flutter plugin for Khoros BrandMessenger SDK
   s.author           = { 'Khoros' => 'support@khoros.com' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
-  s.prepare_command = 'rm -rf ./ios-brandmessenger-sdk-dist && git clone --depth=1 --branch=1.15.0 https://github.com/lithiumtech/ios-brandmessenger-sdk-dist.git && rm -rf ./ios-brandmessenger-sdk-dist/.git'
+  s.prepare_command = 'rm -rf ./ios-brandmessenger-sdk-dist && git clone --depth=1 --branch=1.14.0 https://github.com/lithiumtech/ios-brandmessenger-sdk-dist.git && rm -rf ./ios-brandmessenger-sdk-dist/.git'
   s.dependency 'Flutter'
   s.platform = :ios, '9.0'
 
