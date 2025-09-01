@@ -1,0 +1,90 @@
+name: Publish and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      - name: Update version in pubspec.yaml
+        id: version
+        run: |
+          # Update version in pubspec.yaml
+          sed -i "s/^version: .*/version: ${{ github.event.inputs.version }}/" pubspec.yaml
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          echo "Updated to version ${{ github.event.inputs.version }}"
+      
+      - name: Update CHANGELOG
+        run: |
+          DATE=$(date +"%Y-%m-%d")
+          # Add new version entry at the top of CHANGELOG after the header
+          sed -i "/^# Changelog/a\\
+\\
+## [${{ github.event.inputs.version }}] - ${DATE}\\
+\\
+### Added\\
+- Release created via GitHub Actions\\
+" CHANGELOG.md
+      
+      - name: Run tests
+        run: flutter test
+      
+      - name: Analyze code
+        run: flutter analyze
+      
+      - name: Commit version bump and changelog
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add pubspec.yaml CHANGELOG.md
+          git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
+      
+      - name: Dry run publish
+        run: flutter pub publish --dry-run
+      
+      - name: Publish to pub.dev
+        run: |
+          mkdir -p ~/.config/dart
+          echo '${{ secrets.PUB_CREDENTIALS }}' > ~/.config/dart/pub-credentials.json
+          flutter pub publish --force
+      
+      - name: Create and push tag
+        run: |
+          git tag -a "v${{ github.event.inputs.version }}" -m "Release version ${{ github.event.inputs.version }}"
+          git push origin "v${{ github.event.inputs.version }}"
+      
+      - name: Push version commit
+        run: git push origin HEAD:main
+      
+      - name: Create GitHub Release
+        run: |
+          chmod +x ./create-github-release.sh
+          ./create-github-release.sh "v${{ github.event.inputs.version }}" "${{ secrets.GITHUB_TOKEN }}" || {
+            echo "Warning: Failed to create release, but pub.dev publish was successful"
+            exit 0
+          }
