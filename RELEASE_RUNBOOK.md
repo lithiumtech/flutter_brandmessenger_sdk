@@ -36,18 +36,29 @@ This document outlines the steps to release a new version of the `flutter_brandm
       flutter pub publish
       ```
 
-5.  **Create Git Tag:**
-    - Create a Git tag for the new version to mark the release point in the repository.
-    - Replace `vX.X.X` with the new version number (e.g., `v1.0.1`).
-      ```sh
-      git tag -a vX.X.X -m "Release version X.X.X"
-      ```
+5.  **Create Tag and GitHub Release:**
 
-6.  **Push Tag to Remote:**
-    - Push the newly created tag to the remote repository.
-      ```sh
-      git push origin vX.X.X
-      ```
+    #### Option A: CLI Tag + GitHub Release (Two Steps)
+    ```sh
+    # Create and push tag
+    git tag -a vX.X.X -m "Release version X.X.X"
+    git push origin vX.X.X
+    ```
+    Then create a release for the existing tag:
+    1. Navigate to `https://github.com/lithiumtech/flutter_brandmessenger_sdk/releases`
+    2. Click **"Draft a new release"**
+    3. Select the existing tag from the dropdown
+    4. Add release title and notes
+    5. Click **"Publish release"**
+
+    #### Option B: GitHub UI (Tag + Release in One Step)
+    1. Navigate to the repository's **Releases** page: `https://github.com/lithiumtech/flutter_brandmessenger_sdk/releases`
+    2. Click **"Draft a new release"**
+    3. **Create new tag**: Type your new tag name (e.g., `v1.0.1`) and select **"Create new tag on publish"**
+    4. **Target Branch**: Select the branch to create the release from (usually `main`)
+    5. **Release Title**: Enter a descriptive title (e.g., `Flutter SDK v1.0.1`)
+    6. **Release Notes**: Click **"Generate release notes"** for automatic changelog
+    7. Click **"Publish release"** to create both tag and release simultaneously
 
 ## Post-release
 
